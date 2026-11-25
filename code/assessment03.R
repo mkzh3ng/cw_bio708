@@ -51,17 +51,6 @@ quebec <- df_co2 %>% filter(type == "Quebec") %>%
   labs(title = "Quebec") + 
   geom_point()
 
-df_co2 %>% filter(type == "Quebec") %>% 
-  ggplot(
-    aes(
-      x = conc,
-      y = exp(uptake),
-      color = treatment
-    )
-  ) + 
-  labs(title = "Quebec") + 
-  geom_point()
-
 mississippi <- df_co2 %>% filter(type == "Mississippi") %>% 
   ggplot(
     aes(
@@ -90,10 +79,24 @@ quebec/mississippi
 # 
 # Fit these models separately for each plant origin.
 
-m <- glm(uptake ~ conc + treatment + (conc*treatment),
-         data = df_co2)
+df_q <- df_co2 %>% 
+  filter(type == "Quebec") %>% 
+  mutate(log_uptake = log(uptake))
 
-summary(m)
+df_m <- df_co2 %>% 
+  filter(type == "Mississippi") %>% 
+  mutate(log_uptake = log(uptake))
+
+m_q <- glm(log_uptake ~ conc + treatment + (conc*treatment),
+           data = df_q,
+           family = "gaussian")
+
+m_miss <- glm(log_uptake ~ conc + treatment + (conc*treatment),
+              data = df_m,
+              family = "gaussian")
+
+summary(m_q)
+summary(m_miss)
 
 # Q5
 # Based on the models fitted in Q4 for Quebec and Mississippi plants,
@@ -102,7 +105,15 @@ summary(m)
 # for each plant origin. Highlight the differences between Quebec and 
 # Mississippi plants, and use the model results to support your answers.
 
-# ENTER YOUR ANSWER HERE as COMMENT:
+# ENTER YOUR ANSWER HERE as COMMENT: I used GLM under the Gaussian family of 
+# analysis to see how well each variable predicts CO2 uptake. For Quebec and 
+# Mississippi, ambient CO2 concentration seems to be a good predictor of uptake
+# value as the p value for this variable falls below 0.05. The treatment method 
+# also seems to be a good predictor for Mississippi, but not for Quebec as seen
+# by its high p value. The interaction between concentration and treatment 
+# didn't seem to be a good predictor of uptake in both locations, with both 
+# p values being far over the 0.05 threshold. 
+
 # (no coding required for this question)
 
 
@@ -180,7 +191,7 @@ df_env <- janitor::clean_names(df_env)
 
 df_env %>% 
   select(where(~ n_distinct(.) == 1)) %>% 
-           names()
+  names()
 
 df_env_sub <- df_env %>% 
   select(- precipitation, elevation, geology)
@@ -219,11 +230,11 @@ df_m <- left_join(df_n, df_env_sub)
 # the best predictive model as a comment.
 
 m_m <- glm(cbind(n1, n_sum - n1) ~ 
-                 env_het +
-                 stream +
-                 habitat,
-               data = df_m,
-               family = "binomial")
+             env_het +
+             stream +
+             habitat,
+           data = df_m,
+           family = "binomial")
 
 summary(m_m)
 
